@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# RecallFlow Frontend
 
-## Getting Started
+RecallFlow Frontend is the modern, responsive web application for the **RecallFlow Spaced Repetition Study & Revision Platform**.
 
-First, run the development server:
+Built with **Next.js 16 (App Router)**, **React**, **Tailwind CSS**, and **Lucide Icons**.
 
+---
+
+## 🚀 Features
+
+- **Daily Study Dashboard**: Overview of today's study duration, due revisions, overdue alerts, and today's logged sessions.
+- **Course & Topic Hierarchy**: Manage courses, algorithm strategies (`quick`, `three_month`, `six_month`, `one_year`, `two_year`), and subject topics.
+- **Spaced Repetition Revision Manager**: Filter Today, Upcoming, and Overdue reviews with completion notes.
+- **Analytics & Learning Streaks**: Track consecutive study streaks, revision completion rates %, 7-day study bar charts, and 30-day activity heatmaps.
+- **Monthly Calendar Grid**: Month-by-month grid displaying daily study sessions and revision status indicators.
+- **Global Search**: Search across courses, topics, study notes, and revision notes.
+- **Notifications Drawer**: Daily reminder alerts for due revisions and overdue tasks.
+- **JWT Authentication**: Login and registration modals with JWT session persistence.
+
+---
+
+## 🛠️ Getting Started
+
+### 1. Prerequisites
+Ensure the **RecallFlow Backend** (`recallflow-backend`) is running on `http://localhost:3000`.
+
+### 2. Installation
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Running Development Server
+```bash
+npm run dev
+```
+Open [http://localhost:3001](http://localhost:3001) in your browser.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+### 4. Production Build
+```bash
+npm run build
+npm start
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 📚 Documentation
 
-To learn more about Next.js, take a look at the following resources:
+Detailed documentation is available in the [`docs/`](file:///C:/Users/Prakash/Personal%20Projects/recallflow-frontend/docs) folder:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [`docs/architecture.md`](file:///C:/Users/Prakash/Personal%20Projects/recallflow-frontend/docs/architecture.md) — System architecture, design tokens, and state management
+- [`docs/components.md`](file:///C:/Users/Prakash/Personal%20Projects/recallflow-frontend/docs/components.md) — Comprehensive component guide
+- [`docs/api-integration.md`](file:///C:/Users/Prakash/Personal%20Projects/recallflow-frontend/docs/api-integration.md) — API client endpoints mapping
+- [`docs/development-plan.md`](file:///C:/Users/Prakash/Personal%20Projects/recallflow-frontend/docs/development-plan.md) — Frontend master plan and future roadmap
+- [`docs/changelog.md`](file:///C:/Users/Prakash/Personal%20Projects/recallflow-frontend/docs/changelog.md) — Release notes and change history
