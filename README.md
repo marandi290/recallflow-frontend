@@ -19,23 +19,43 @@ Built with **Next.js 16 (App Router)**, **React**, **Tailwind CSS**, and **Lucid
 
 ---
 
-## 🛠️ Getting Started
+## 🛠️ Getting Started (Local Setup)
 
 ### 1. Prerequisites
-Ensure the **RecallFlow Backend** (`recallflow-backend`) is running on `http://localhost:3000`.
+- [Node.js](https://nodejs.org/) (version 18+ or 20+ LTS)
+- [npm](https://www.npmjs.com/) (version 9+)
+- Ensure the **RecallFlow Backend** (`recallflow-backend`) is running at `http://localhost:3000`.
 
 ### 2. Installation
+Navigate to the frontend directory and install dependencies:
 ```bash
+cd "C:\Users\Prakash\Personal Projects\recallflow-frontend"
 npm install
 ```
 
-### 3. Running Development Server
+### 3. Configure Environment Variables
+Create a `.env.local` file by copying `.env.example`:
+```bash
+# Windows PowerShell
+Copy-Item .env.example .env.local
+
+# macOS / Linux
+cp .env.example .env.local
+```
+
+The default backend API URL is:
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
+```
+
+### 4. Running the Development Server
 ```bash
 npm run dev
 ```
-Open [http://localhost:3001](http://localhost:3001) in your browser.
+Open your browser and navigate to:
+- **Web App**: [http://localhost:3001](http://localhost:3001) (or `http://localhost:3000` if port 3000 is available)
 
-### 4. Production Build
+### 5. Production Build & Execution
 ```bash
 npm run build
 npm start
