@@ -9,15 +9,15 @@ import { loadRazorpayScript } from "../lib/razorpay";
 function ModalWrapper({ isOpen, onClose, title, children }) {
     if (!isOpen) return null;
     return (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
-                <div className="p-4 px-6 border-b border-slate-800 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh] my-auto animate-in fade-in zoom-in duration-200">
+                <div className="p-4 px-6 border-b border-slate-800 flex items-center justify-between shrink-0">
                     <h3 className="text-lg font-bold text-white">{title}</h3>
-                    <button onClick={onClose} className="text-slate-400 hover:text-white p-1 transition">
+                    <button onClick={onClose} className="text-slate-400 hover:text-white p-1 transition cursor-pointer">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
-                <div className="p-6">{children}</div>
+                <div className="p-6 overflow-y-auto custom-scrollbar flex-1">{children}</div>
             </div>
         </div>
     );
