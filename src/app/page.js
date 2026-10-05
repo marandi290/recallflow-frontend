@@ -17,6 +17,7 @@ import {
     CompleteRevisionModal,
     AuthModal,
     NotificationsModal,
+    UserProfileModal,
 } from "../components/Modals";
 import MobileNav from "../components/MobileNav";
 
@@ -50,6 +51,7 @@ export default function Home() {
     const [activeRevisionId, setActiveRevisionId] = useState(null);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
     // Load User
     useEffect(() => {
@@ -238,6 +240,15 @@ export default function Home() {
         setUserId(authData.user.id);
     };
 
+    const handleLogout = () => {
+        setAuthToken(null);
+        setCurrentUser(null);
+        setUser(null);
+        setUserId(1);
+        setIsProfileModalOpen(false);
+        window.location.reload();
+    };
+
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
             <Header
@@ -247,10 +258,18 @@ export default function Home() {
                 onOpenSearch={() => setActiveTab("search")}
                 onOpenNotifications={() => setIsNotificationsOpen(true)}
                 notificationCount={notificationsData?.unreadCount || 0}
+                user={user}
+                onOpenProfile={() => setIsProfileModalOpen(true)}
+                onLogout={handleLogout}
             />
 
             <div className="flex flex-1">
-                <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+                <Sidebar
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
+                    user={user}
+                    onOpenProfile={() => setIsProfileModalOpen(true)}
+                />
 
                 <main className="flex-1 p-6 lg:p-8 max-w-7xl">
                     {activeTab === "dashboard" && (
@@ -363,6 +382,15 @@ export default function Home() {
                 isOpen={isNotificationsOpen}
                 onClose={() => setIsNotificationsOpen(false)}
                 notificationsData={notificationsData}
+            />
+
+            <UserProfileModal
+                isOpen={isProfileModalOpen}
+                onClose={() => setIsProfileModalOpen(false)}
+                user={user}
+                analytics={analyticsOverview}
+                coursesCount={courses.length}
+                onLogout={handleLogout}
             />
 
             <MobileNav activeTab={activeTab} setActiveTab={setActiveTab} />

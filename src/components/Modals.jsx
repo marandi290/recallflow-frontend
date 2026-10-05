@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, CheckCircle, Bell, AlertTriangle, BookOpen, Layers, Plus } from "lucide-react";
+import { X, CheckCircle, Bell, AlertTriangle, BookOpen, Layers, Plus, User, Mail, Calendar, Flame, Clock, LogOut, Shield } from "lucide-react";
 import { api } from "../lib/api";
 
 // Modal Wrapper
@@ -508,6 +508,146 @@ export function NotificationsModal({ isOpen, onClose, notificationsData }) {
                         </div>
                     ))
                 )}
+            </div>
+        </ModalWrapper>
+    );
+}
+
+// User Profile Modal
+export function UserProfileModal({ isOpen, onClose, user, analytics, coursesCount, onLogout }) {
+    if (!isOpen || !user) return null;
+
+    const getInitials = (name) => {
+        if (!name) return "U";
+        const parts = name.trim().split(" ");
+        if (parts.length >= 2) {
+            return (parts[0][0] + parts[1][0]).toUpperCase();
+        }
+        return name.slice(0, 2).toUpperCase();
+    };
+
+    const formattedDate = user.createdAt
+        ? new Date(user.createdAt).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+          })
+        : "Active Member";
+
+    return (
+        <ModalWrapper isOpen={isOpen} onClose={onClose} title="User Profile">
+            <div className="space-y-6">
+                {/* Profile Header Card */}
+                <div className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-indigo-950/40 via-slate-800/60 to-slate-900 border border-slate-800">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white font-extrabold text-xl shadow-lg shadow-indigo-600/30 shrink-0">
+                        {getInitials(user.name)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-lg font-bold text-white truncate">{user.name}</h3>
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                Active
+                            </span>
+                        </div>
+                        <p className="text-xs text-slate-300 flex items-center gap-1.5 mt-1 truncate">
+                            <Mail className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                            {user.email}
+                        </p>
+                        <p className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                            <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            Joined {formattedDate}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Learning Stats Grid */}
+                <div>
+                    <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2.5">
+                        Learning Overview
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-800 flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-orange-500/10 text-orange-400 flex items-center justify-center shrink-0">
+                                <Flame className="w-4 h-4" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] text-slate-400">Current Streak</p>
+                                <p className="text-sm font-bold text-white">
+                                    {analytics?.learningStreakDays || 0} <span className="text-[10px] text-slate-400 font-normal">days</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-800 flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center shrink-0">
+                                <BookOpen className="w-4 h-4" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] text-slate-400">Courses</p>
+                                <p className="text-sm font-bold text-white">
+                                    {coursesCount || 0} <span className="text-[10px] text-slate-400 font-normal">active</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-800 flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                                <CheckCircle className="w-4 h-4" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] text-slate-400">Revisions Done</p>
+                                <p className="text-sm font-bold text-white">
+                                    {analytics?.completedRevisionsCount || 0} <span className="text-[10px] text-slate-400 font-normal">reviewed</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-800 flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-violet-500/10 text-violet-400 flex items-center justify-center shrink-0">
+                                <Clock className="w-4 h-4" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] text-slate-400">Study Time</p>
+                                <p className="text-sm font-bold text-white">
+                                    {analytics?.totalStudyHours || 0} <span className="text-[10px] text-slate-400 font-normal">hrs</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Account Details */}
+                <div className="p-3.5 rounded-xl bg-slate-800/30 border border-slate-800 space-y-2 text-xs">
+                    <div className="flex items-center justify-between text-slate-400">
+                        <span className="flex items-center gap-1.5">
+                            <Shield className="w-3.5 h-3.5 text-indigo-400" />
+                            Authentication
+                        </span>
+                        <span className="text-slate-300 font-medium">JWT Secure Session</span>
+                    </div>
+                    <div className="flex items-center justify-between text-slate-400">
+                        <span>User ID</span>
+                        <span className="font-mono text-slate-300">#{user.id}</span>
+                    </div>
+                </div>
+
+                {/* Footer Buttons */}
+                <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+                    <button
+                        onClick={onLogout}
+                        className="flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition"
+                    >
+                        <LogOut className="w-3.5 h-3.5" />
+                        Log Out
+                    </button>
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium transition"
+                    >
+                        Close
+                    </button>
+                </div>
             </div>
         </ModalWrapper>
     );

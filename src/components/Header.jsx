@@ -4,18 +4,36 @@ import { useState, useEffect } from "react";
 import { Search, Bell, Plus, User, LogOut, BookOpen } from "lucide-react";
 import { getCurrentUser, setAuthToken, setCurrentUser } from "../lib/api";
 
-export default function Header({ onOpenAuth, onOpenStudyModal, onOpenCourseModal, onOpenSearch, onOpenNotifications, notificationCount }) {
-    const [user, setUser] = useState(null);
+export default function Header({
+    onOpenAuth,
+    onOpenStudyModal,
+    onOpenCourseModal,
+    onOpenSearch,
+    onOpenNotifications,
+    notificationCount,
+    user: propUser,
+    onOpenProfile,
+    onLogout: propOnLogout,
+}) {
+    const [user, setUser] = useState(propUser || null);
 
     useEffect(() => {
-        setUser(getCurrentUser());
-    }, []);
+        if (propUser !== undefined) {
+            setUser(propUser);
+        } else {
+            setUser(getCurrentUser());
+        }
+    }, [propUser]);
 
     const handleLogout = () => {
-        setAuthToken(null);
-        setCurrentUser(null);
-        setUser(null);
-        window.location.reload();
+        if (propOnLogout) {
+            propOnLogout();
+        } else {
+            setAuthToken(null);
+            setCurrentUser(null);
+            setUser(null);
+            window.location.reload();
+        }
     };
 
     return (
@@ -73,10 +91,18 @@ export default function Header({ onOpenAuth, onOpenStudyModal, onOpenCourseModal
 
                 {user ? (
                     <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
-                            <User className="w-4 h-4 text-indigo-400" />
-                            <span className="text-sm font-medium text-slate-200">{user.name}</span>
-                        </div>
+                        <button
+                            onClick={onOpenProfile}
+                            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700/80 px-3 py-1.5 rounded-lg border border-slate-700 transition cursor-pointer group"
+                            title="View your profile & learning statistics"
+                        >
+                            <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-[11px] font-bold text-white shadow-sm">
+                                {user.name?.slice(0, 1).toUpperCase() || "U"}
+                            </div>
+                            <span className="text-sm font-medium text-slate-200 group-hover:text-white transition">
+                                {user.name}
+                            </span>
+                        </button>
                         <button
                             onClick={handleLogout}
                             title="Log out"
