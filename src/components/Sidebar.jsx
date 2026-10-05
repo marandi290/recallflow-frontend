@@ -89,15 +89,6 @@ export default function Sidebar({
                         </button>
                     </div>
                 </div>
-
-                <div className="p-3.5 rounded-xl bg-slate-800/40 border border-slate-800 text-xs text-slate-400 space-y-1">
-                    <p className="font-semibold text-slate-300">RecallFlow Spaced Engine</p>
-                    <p>Algorithms: Quick, 3-Mo, 6-Mo, 1-Yr, 2-Yr</p>
-                    <div className="pt-1.5 flex items-center justify-between text-[11px] text-indigo-400 font-medium">
-                        <span>API: Connected</span>
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    </div>
-                </div>
             </div>
         </aside>
     );
