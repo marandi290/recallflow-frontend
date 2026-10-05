@@ -726,38 +726,34 @@ export function PaywallModal({
         try {
             await loadRazorpayScript();
             const userId = user?.id || 1;
-            const res = await api.createPaymentOrder(userId);
-            const orderData = res.data;
+            const res = await api.createPaymentOrder(userId, { amount: 500, currency: "INR" });
+            const orderData = res.data || res;
 
-            // If sandbox mode or Razorpay window is simulated
-            if (orderData.isSandbox || typeof window === "undefined" || !window.Razorpay) {
-                const verifyRes = await api.verifyPayment(userId, {
-                    razorpay_order_id: orderData.orderId,
-                    razorpay_payment_id: "pay_sim_" + Date.now(),
-                    razorpay_signature: "sandbox_simulated",
-                });
-                if (onSubscriptionSuccess) onSubscriptionSuccess(verifyRes.data);
-                alert("🎉 Subscription activated! 30-day Pro access unlocked.");
-                onClose();
-                return;
+            if (typeof window === "undefined" || !window.Razorpay) {
+                throw new Error("Razorpay SDK failed to load. Please check your internet connection.");
             }
 
-            // Real Razorpay Checkout modal
             const options = {
-                key: orderData.keyId,
-                amount: orderData.amount, // 500 paise = Rs. 5
-                currency: orderData.currency,
+                key: orderData.key_id || orderData.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_TkA6xE3MDke4M1",
+                amount: orderData.amount, // in paise (e.g. 500 paise = Rs. 5)
+                currency: orderData.currency || "INR",
                 name: "RecallFlow Pro",
                 description: "Monthly Study Subscription - Rs. 5/month",
-                order_id: orderData.orderId,
+                order_id: orderData.order_id || orderData.orderId,
                 handler: async function (response) {
                     try {
-                        const verifyRes = await api.verifyPayment(userId, response);
+                        const verifyRes = await api.verifyPayment(userId, {
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                        });
                         if (onSubscriptionSuccess) onSubscriptionSuccess(verifyRes.data);
-                        alert("🎉 Payment successful! RecallFlow Pro subscription is active.");
+                        alert("🎉 Payment successful! RecallFlow Pro subscription is now active.");
                         onClose();
                     } catch (verifyErr) {
-                        alert(verifyErr.message || "Payment verification failed");
+                        setError(verifyErr.message || "Payment verification failed");
+                    } finally {
+                        setLoading(false);
                     }
                 },
                 prefill: {
@@ -771,16 +767,21 @@ export function PaywallModal({
                 theme: {
                     color: "#4f46e5",
                 },
+                modal: {
+                    ondismiss: function () {
+                        setLoading(false);
+                    },
+                },
             };
 
             const rzp = new window.Razorpay(options);
             rzp.on("payment.failed", function (resp) {
                 setError(resp.error?.description || "Payment failed or was cancelled.");
+                setLoading(false);
             });
             rzp.open();
         } catch (err) {
             setError(err.message || "Unable to initiate payment");
-        } finally {
             setLoading(false);
         }
     };

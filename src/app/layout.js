@@ -1,4 +1,5 @@
 import "./globals.css";
+import Script from "next/script";
 import PWAInstaller from "../components/PWAInstaller";
 
 export const metadata = {
@@ -28,6 +29,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className="bg-slate-950 text-slate-100 antialiased custom-scrollbar">
         <PWAInstaller />
+        <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
         {children}
       </body>
     </html>

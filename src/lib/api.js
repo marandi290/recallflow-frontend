@@ -134,7 +134,9 @@ export const api = {
 
     // Payments & Subscriptions (Rs. 5/month Paywall)
     getSubscriptionStatus: (userId) => request(`/payments/status?userId=${userId}`),
-    createPaymentOrder: (userId) => request("/payments/create-order", { method: "POST", body: { userId } }),
-    verifyPayment: (userId, paymentData) => request("/payments/verify", { method: "POST", body: { userId, ...paymentData } }),
+    createPaymentOrder: (userId, orderData = {}) =>
+        request("/payments/create-order", { method: "POST", body: { userId, ...orderData } }),
+    verifyPayment: (userId, paymentData) =>
+        request("/payments/verify", { method: "POST", body: { userId, ...paymentData } }),
     getPaymentHistory: (userId) => request(`/payments/history?userId=${userId}`),
 };
