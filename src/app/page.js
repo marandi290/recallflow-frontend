@@ -104,11 +104,44 @@ export default function Home() {
                 setTopicsMap(tMap);
             }
 
-            if (dashRes.status === "fulfilled") setDashboardData(dashRes.value.data);
+            const defaultDashboard = {
+                todayStudyEntriesCount: 0,
+                todayRevisionsCount: 0,
+                pendingRevisionsCount: 0,
+                missedRevisionsCount: 0,
+                upcomingRevisionsCount: 0,
+                dailyStudyTimeMinutes: 0,
+                todayStudyEntries: [],
+                todayRevisions: [],
+            };
+            setDashboardData(
+                dashRes.status === "fulfilled" && dashRes.value?.data
+                    ? dashRes.value.data
+                    : defaultDashboard
+            );
+
             if (todayRevRes.status === "fulfilled") setTodayRevisions(todayRevRes.value.data || []);
             if (upRevRes.status === "fulfilled") setUpcomingRevisions(upRevRes.value.data || []);
             if (missedRevRes.status === "fulfilled") setMissedRevisions(missedRevRes.value.data || []);
-            if (anaOverRes.status === "fulfilled") setAnalyticsOverview(anaOverRes.value.data);
+
+            const defaultAnalytics = {
+                totalCourses: 0,
+                completedCourses: 0,
+                totalTopics: 0,
+                totalStudyHours: 0,
+                totalStudyMinutes: 0,
+                learningStreakDays: 0,
+                completedRevisionsCount: 0,
+                missedRevisionsCount: 0,
+                revisionCompletionRate: 0,
+                missedRevisionRate: 0,
+            };
+            setAnalyticsOverview(
+                anaOverRes.status === "fulfilled" && anaOverRes.value?.data
+                    ? anaOverRes.value.data
+                    : defaultAnalytics
+            );
+
             if (anaWeekRes.status === "fulfilled") setAnalyticsWeekly(anaWeekRes.value.data || []);
             if (anaMonthRes.status === "fulfilled") setAnalyticsMonthly(anaMonthRes.value.data || []);
             if (calRes.status === "fulfilled") setCalendarData(calRes.value.data);
