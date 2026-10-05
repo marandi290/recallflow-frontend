@@ -18,6 +18,7 @@ import {
     AuthModal,
     NotificationsModal,
     UserProfileModal,
+    PaywallModal,
 } from "../components/Modals";
 import MobileNav from "../components/MobileNav";
 
@@ -52,6 +53,8 @@ export default function Home() {
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+    const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+    const [subscriptionStatus, setSubscriptionStatus] = useState(null);
 
     // Load User
     useEffect(() => {
@@ -76,6 +79,7 @@ export default function Home() {
                 anaMonthRes,
                 calRes,
                 notifRes,
+                subRes,
             ] = await Promise.allSettled([
                 api.getCourses(userId),
                 api.getTodayDashboard(userId),
@@ -87,6 +91,7 @@ export default function Home() {
                 api.getMonthlyAnalytics(userId),
                 api.getCalendar(userId, new Date().getFullYear(), new Date().getMonth() + 1),
                 api.getNotifications(userId),
+                api.getSubscriptionStatus(userId),
             ]);
 
             if (coursesRes.status === "fulfilled") {
@@ -148,6 +153,13 @@ export default function Home() {
             if (anaMonthRes.status === "fulfilled") setAnalyticsMonthly(anaMonthRes.value.data || []);
             if (calRes.status === "fulfilled") setCalendarData(calRes.value.data);
             if (notifRes.status === "fulfilled") setNotificationsData(notifRes.value.data);
+            if (subRes && subRes.status === "fulfilled" && subRes.value?.data) {
+                const subData = subRes.value.data;
+                setSubscriptionStatus(subData);
+                if (subData.plan === "expired") {
+                    setIsPaywallOpen(true);
+                }
+            }
         } catch (error) {
             console.error("Error loading RecallFlow backend data:", error);
         }
@@ -249,17 +261,27 @@ export default function Home() {
         window.location.reload();
     };
 
+    const guardPaywall = (action) => {
+        if (subscriptionStatus?.plan === "expired") {
+            setIsPaywallOpen(true);
+            return;
+        }
+        action();
+    };
+
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
             <Header
                 onOpenAuth={() => setIsAuthModalOpen(true)}
-                onOpenStudyModal={() => setIsStudyModalOpen(true)}
-                onOpenCourseModal={() => setIsCourseModalOpen(true)}
+                onOpenStudyModal={() => guardPaywall(() => setIsStudyModalOpen(true))}
+                onOpenCourseModal={() => guardPaywall(() => setIsCourseModalOpen(true))}
                 onOpenSearch={() => setActiveTab("search")}
                 onOpenNotifications={() => setIsNotificationsOpen(true)}
                 notificationCount={notificationsData?.unreadCount || 0}
                 user={user}
+                subscriptionStatus={subscriptionStatus}
                 onOpenProfile={() => setIsProfileModalOpen(true)}
+                onOpenPaywall={() => setIsPaywallOpen(true)}
                 onLogout={handleLogout}
             />
 
@@ -268,7 +290,9 @@ export default function Home() {
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
                     user={user}
+                    subscriptionStatus={subscriptionStatus}
                     onOpenProfile={() => setIsProfileModalOpen(true)}
+                    onOpenPaywall={() => setIsPaywallOpen(true)}
                 />
 
                 <main className="flex-1 p-6 lg:p-8 max-w-7xl">
@@ -276,11 +300,13 @@ export default function Home() {
                         <DashboardView
                             dashboardData={dashboardData}
                             onCompleteRevision={(revId) => {
-                                setActiveRevisionId(revId);
-                                setIsCompleteModalOpen(true);
+                                guardPaywall(() => {
+                                    setActiveRevisionId(revId);
+                                    setIsCompleteModalOpen(true);
+                                });
                             }}
-                            onOpenStudyModal={() => setIsStudyModalOpen(true)}
-                            onOpenCourseModal={() => setIsCourseModalOpen(true)}
+                            onOpenStudyModal={() => guardPaywall(() => setIsStudyModalOpen(true))}
+                            onOpenCourseModal={() => guardPaywall(() => setIsCourseModalOpen(true))}
                         />
                     )}
 
@@ -390,7 +416,20 @@ export default function Home() {
                 user={user}
                 analytics={analyticsOverview}
                 coursesCount={courses.length}
+                subscriptionStatus={subscriptionStatus}
+                onOpenPaywall={() => setIsPaywallOpen(true)}
                 onLogout={handleLogout}
+            />
+
+            <PaywallModal
+                isOpen={isPaywallOpen}
+                onClose={() => setIsPaywallOpen(false)}
+                user={user}
+                subscriptionStatus={subscriptionStatus}
+                onSubscriptionSuccess={(newSub) => {
+                    setSubscriptionStatus(newSub);
+                    loadAllData();
+                }}
             />
 
             <MobileNav activeTab={activeTab} setActiveTab={setActiveTab} />

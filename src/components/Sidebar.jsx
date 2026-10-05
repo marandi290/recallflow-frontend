@@ -1,8 +1,15 @@
 "use client";
 
-import { LayoutDashboard, BookOpen, Clock, Calendar, BarChart3, Search, Sparkles } from "lucide-react";
+import { LayoutDashboard, BookOpen, Clock, Calendar, BarChart3, Search, Sparkles, Zap } from "lucide-react";
 
-export default function Sidebar({ activeTab, setActiveTab, user, onOpenProfile }) {
+export default function Sidebar({
+    activeTab,
+    setActiveTab,
+    user,
+    subscriptionStatus,
+    onOpenProfile,
+    onOpenPaywall,
+}) {
     const navItems = [
         { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
         { id: "courses", label: "Courses & Topics", icon: BookOpen },
@@ -56,6 +63,32 @@ export default function Sidebar({ activeTab, setActiveTab, user, onOpenProfile }
                         </div>
                     </button>
                 )}
+
+                {/* Subscription Card in Sidebar */}
+                <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-950/30 via-slate-800/40 to-slate-900 border border-slate-800 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-white flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                            RecallFlow Pro
+                        </span>
+                        <span className="text-[11px] font-semibold text-indigo-300">₹5/mo</span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] text-slate-400">
+                        <span>
+                            {subscriptionStatus?.isSubscriptionActive
+                                ? "Active Subscription"
+                                : subscriptionStatus?.isTrialActive
+                                ? `Trial: ${subscriptionStatus.daysRemainingInTrial}d left`
+                                : "Trial Expired"}
+                        </span>
+                        <button
+                            onClick={onOpenPaywall}
+                            className="text-indigo-400 hover:text-indigo-300 font-semibold underline underline-offset-2 cursor-pointer"
+                        >
+                            {subscriptionStatus?.isSubscriptionActive ? "Extend" : "Upgrade"}
+                        </button>
+                    </div>
+                </div>
 
                 <div className="p-3.5 rounded-xl bg-slate-800/40 border border-slate-800 text-xs text-slate-400 space-y-1">
                     <p className="font-semibold text-slate-300">RecallFlow Spaced Engine</p>

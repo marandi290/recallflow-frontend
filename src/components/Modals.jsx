@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, CheckCircle, Bell, AlertTriangle, BookOpen, Layers, Plus, User, Mail, Calendar, Flame, Clock, LogOut, Shield } from "lucide-react";
+import { X, CheckCircle, Bell, AlertTriangle, BookOpen, Layers, Plus, User, Mail, Calendar, Flame, Clock, LogOut, Shield, Sparkles, Zap } from "lucide-react";
 import { api } from "../lib/api";
+import { loadRazorpayScript } from "../lib/razorpay";
 
 // Modal Wrapper
 function ModalWrapper({ isOpen, onClose, title, children }) {
@@ -514,7 +515,16 @@ export function NotificationsModal({ isOpen, onClose, notificationsData }) {
 }
 
 // User Profile Modal
-export function UserProfileModal({ isOpen, onClose, user, analytics, coursesCount, onLogout }) {
+export function UserProfileModal({
+    isOpen,
+    onClose,
+    user,
+    analytics,
+    coursesCount,
+    subscriptionStatus,
+    onOpenPaywall,
+    onLogout,
+}) {
     if (!isOpen || !user) return null;
 
     const getInitials = (name) => {
@@ -558,6 +568,47 @@ export function UserProfileModal({ isOpen, onClose, user, analytics, coursesCoun
                             <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                             Joined {formattedDate}
                         </p>
+                    </div>
+                </div>
+
+                {/* Subscription Tier Card */}
+                <div className="p-3.5 rounded-xl bg-slate-800/40 border border-slate-800 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                            Subscription Status
+                        </span>
+                        {subscriptionStatus?.isSubscriptionActive ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                Pro Active (₹5/mo)
+                            </span>
+                        ) : subscriptionStatus?.isTrialActive ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                Free Trial ({subscriptionStatus?.daysRemainingInTrial} days left)
+                            </span>
+                        ) : (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                                Trial Expired
+                            </span>
+                        )}
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-slate-400">
+                        <span>
+                            {subscriptionStatus?.isSubscriptionActive && subscriptionStatus?.subscriptionEndsAt
+                                ? `Valid until: ${new Date(subscriptionStatus.subscriptionEndsAt).toLocaleDateString()}`
+                                : subscriptionStatus?.trialEndsAt
+                                ? `Trial ends: ${new Date(subscriptionStatus.trialEndsAt).toLocaleDateString()}`
+                                : "Rs. 5/month"}
+                        </span>
+                        <button
+                            onClick={() => {
+                                onClose();
+                                if (onOpenPaywall) onOpenPaywall();
+                            }}
+                            className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold underline underline-offset-2 cursor-pointer"
+                        >
+                            {subscriptionStatus?.isSubscriptionActive ? "Extend (+30d)" : "Upgrade for ₹5"}
+                        </button>
                     </div>
                 </div>
 
@@ -636,17 +687,214 @@ export function UserProfileModal({ isOpen, onClose, user, analytics, coursesCoun
                 <div className="flex items-center justify-between pt-2 border-t border-slate-800">
                     <button
                         onClick={onLogout}
-                        className="flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition"
+                        className="flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition cursor-pointer"
                     >
                         <LogOut className="w-3.5 h-3.5" />
                         Log Out
                     </button>
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium transition"
+                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium transition cursor-pointer"
                     >
                         Close
                     </button>
+                </div>
+            </div>
+        </ModalWrapper>
+    );
+}
+
+// Paywall & Razorpay Checkout Modal
+export function PaywallModal({
+    isOpen,
+    onClose,
+    user,
+    subscriptionStatus,
+    onSubscriptionSuccess,
+}) {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    if (!isOpen) return null;
+
+    const isExpired = subscriptionStatus?.plan === "expired";
+    const daysLeft = subscriptionStatus?.daysRemainingInTrial || 0;
+
+    const handlePayment = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            await loadRazorpayScript();
+            const userId = user?.id || 1;
+            const res = await api.createPaymentOrder(userId);
+            const orderData = res.data;
+
+            // If sandbox mode or Razorpay window is simulated
+            if (orderData.isSandbox || typeof window === "undefined" || !window.Razorpay) {
+                const verifyRes = await api.verifyPayment(userId, {
+                    razorpay_order_id: orderData.orderId,
+                    razorpay_payment_id: "pay_sim_" + Date.now(),
+                    razorpay_signature: "sandbox_simulated",
+                });
+                if (onSubscriptionSuccess) onSubscriptionSuccess(verifyRes.data);
+                alert("🎉 Subscription activated! 30-day Pro access unlocked.");
+                onClose();
+                return;
+            }
+
+            // Real Razorpay Checkout modal
+            const options = {
+                key: orderData.keyId,
+                amount: orderData.amount, // 500 paise = Rs. 5
+                currency: orderData.currency,
+                name: "RecallFlow Pro",
+                description: "Monthly Study Subscription - Rs. 5/month",
+                order_id: orderData.orderId,
+                handler: async function (response) {
+                    try {
+                        const verifyRes = await api.verifyPayment(userId, response);
+                        if (onSubscriptionSuccess) onSubscriptionSuccess(verifyRes.data);
+                        alert("🎉 Payment successful! RecallFlow Pro subscription is active.");
+                        onClose();
+                    } catch (verifyErr) {
+                        alert(verifyErr.message || "Payment verification failed");
+                    }
+                },
+                prefill: {
+                    name: user?.name || "Student",
+                    email: user?.email || "student@recallflow.com",
+                },
+                notes: {
+                    userId: String(userId),
+                    plan: "monthly_rs_5",
+                },
+                theme: {
+                    color: "#4f46e5",
+                },
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.on("payment.failed", function (resp) {
+                setError(resp.error?.description || "Payment failed or was cancelled.");
+            });
+            rzp.open();
+        } catch (err) {
+            setError(err.message || "Unable to initiate payment");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <ModalWrapper isOpen={isOpen} onClose={onClose} title="RecallFlow Pro Subscription">
+            <div className="space-y-6">
+                {/* Hero / Pricing Header */}
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-950 via-slate-900 to-violet-950 border border-indigo-500/30 p-5 text-center shadow-lg">
+                    <div className="absolute top-0 right-0 -mr-6 -mt-6 w-24 h-24 rounded-full bg-indigo-500/20 blur-xl pointer-events-none" />
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 mb-3">
+                        <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                        PREMIUM STUDY ENGINE
+                    </span>
+                    <h3 className="text-3xl font-black text-white">
+                        ₹5 <span className="text-sm font-normal text-slate-400">/ month</span>
+                    </h3>
+                    <p className="text-xs text-slate-300 mt-1">
+                        Only Rs. 5 per month. Cancel or renew anytime.
+                    </p>
+                </div>
+
+                {/* Status Notice */}
+                {isExpired ? (
+                    <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs">
+                        <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
+                        <div>
+                            <p className="font-semibold text-rose-200">7-Day Free Trial Expired</p>
+                            <p className="mt-0.5 text-rose-300/90">
+                                Your free trial has completed. Subscribe to unlock courses, revision schedules, and AI tools.
+                            </p>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs">
+                        <Clock className="w-4 h-4 shrink-0 mt-0.5 text-indigo-400" />
+                        <div>
+                            <p className="font-semibold text-indigo-200">
+                                {daysLeft > 0 ? `${daysLeft} Days Left in Free Trial` : "Free Trial Active"}
+                            </p>
+                            <p className="mt-0.5 text-indigo-300/90">
+                                Upgrade to Pro early to lock in your spaced repetition streak without interruptions.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Features List */}
+                <div className="space-y-2.5">
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                        Everything Included in Pro:
+                    </p>
+                    <div className="space-y-2 text-xs">
+                        <div className="flex items-center gap-2.5 text-slate-200">
+                            <div className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                                <CheckCircle className="w-3.5 h-3.5" />
+                            </div>
+                            <span><strong>Unlimited Courses & Topics:</strong> Add as many study subjects as you need</span>
+                        </div>
+                        <div className="flex items-center gap-2.5 text-slate-200">
+                            <div className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                                <CheckCircle className="w-3.5 h-3.5" />
+                            </div>
+                            <span><strong>5 Spaced Algorithms:</strong> Quick, 3-Month, 6-Month, 1-Year & 2-Year</span>
+                        </div>
+                        <div className="flex items-center gap-2.5 text-slate-200">
+                            <div className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                                <CheckCircle className="w-3.5 h-3.5" />
+                            </div>
+                            <span><strong>AI Flashcards & Quizzes:</strong> Instant memory testing on your notes</span>
+                        </div>
+                        <div className="flex items-center gap-2.5 text-slate-200">
+                            <div className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                                <CheckCircle className="w-3.5 h-3.5" />
+                            </div>
+                            <span><strong>Retention Analytics & Streaks:</strong> Track study hours & review performance</span>
+                        </div>
+                        <div className="flex items-center gap-2.5 text-slate-200">
+                            <div className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                                <CheckCircle className="w-3.5 h-3.5" />
+                            </div>
+                            <span><strong>Automated Reminders:</strong> Missed revision tracking & daily schedule</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Supported Payment Channels */}
+                <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+                    <span className="flex items-center gap-1.5 text-slate-300">
+                        <Shield className="w-3.5 h-3.5 text-indigo-400" />
+                        Secured by Razorpay
+                    </span>
+                    <span>UPI • Cards • NetBanking</span>
+                </div>
+
+                {error && (
+                    <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">
+                        {error}
+                    </div>
+                )}
+
+                {/* Pay Action Button */}
+                <div className="space-y-2 pt-1">
+                    <button
+                        onClick={handlePayment}
+                        disabled={loading}
+                        className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition disabled:opacity-50 cursor-pointer"
+                    >
+                        <Zap className="w-4 h-4 fill-white" />
+                        {loading ? "Processing..." : "Pay ₹5 with Razorpay"}
+                    </button>
+                    <p className="text-[10px] text-center text-slate-500">
+                        Instant activation. 100% money back guarantee if not satisfied.
+                    </p>
                 </div>
             </div>
         </ModalWrapper>

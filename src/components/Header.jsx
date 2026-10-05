@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Bell, Plus, User, LogOut, BookOpen } from "lucide-react";
+import { Search, Bell, Plus, User, LogOut, BookOpen, Sparkles, Zap } from "lucide-react";
 import { getCurrentUser, setAuthToken, setCurrentUser } from "../lib/api";
 
 export default function Header({
@@ -12,7 +12,9 @@ export default function Header({
     onOpenNotifications,
     notificationCount,
     user: propUser,
+    subscriptionStatus,
     onOpenProfile,
+    onOpenPaywall,
     onLogout: propOnLogout,
 }) {
     const [user, setUser] = useState(propUser || null);
@@ -86,6 +88,32 @@ export default function Header({
                         </span>
                     )}
                 </button>
+
+                {/* Subscription Badge & Upgrade Trigger */}
+                {subscriptionStatus?.isSubscriptionActive ? (
+                    <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                        <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                        PRO
+                    </span>
+                ) : subscriptionStatus?.isTrialActive ? (
+                    <button
+                        onClick={onOpenPaywall}
+                        className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 transition cursor-pointer"
+                        title="Click to upgrade to Pro for Rs. 5/month"
+                    >
+                        <span>Trial: {subscriptionStatus.daysRemainingInTrial}d left</span>
+                        <span className="text-[10px] text-amber-400/90 underline font-normal">₹5/mo</span>
+                    </button>
+                ) : subscriptionStatus?.plan === "expired" ? (
+                    <button
+                        onClick={onOpenPaywall}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white shadow-md shadow-rose-600/20 transition cursor-pointer animate-pulse"
+                        title="Your 7-day free trial has expired. Subscribe to continue."
+                    >
+                        <Zap className="w-3.5 h-3.5" />
+                        <span>Subscribe ₹5</span>
+                    </button>
+                ) : null}
 
                 <div className="h-6 w-px bg-slate-800 mx-1" />
 
