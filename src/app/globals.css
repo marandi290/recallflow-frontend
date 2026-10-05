@@ -26,6 +26,11 @@ body {
   margin: 0;
 }
 
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #334155 #0f172a;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
   height: 6px;
