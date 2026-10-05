@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X, CheckCircle, Bell, AlertTriangle, BookOpen, Layers, Plus } from "lucide-react";
+import { api } from "../lib/api";
 
 // Modal Wrapper
 function ModalWrapper({ isOpen, onClose, title, children }) {
@@ -395,15 +396,9 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
         e.preventDefault();
         setError(null);
         try {
-            const endpoint = isLogin ? "/auth/login" : "/auth/register";
-            const payload = isLogin ? { email, password } : { name, email, password };
-            const res = await fetch(`http://localhost:3000/api/v1${endpoint}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message || "Auth failed");
+            const data = isLogin
+                ? await api.login({ email, password })
+                : await api.register({ name, email, password });
 
             onAuthSuccess(data.data);
             onClose();
